@@ -1,0 +1,13 @@
+IF DB_ID(N'AISmartLearningDB') IS NULL CREATE DATABASE AISmartLearningDB;
+GO
+USE AISmartLearningDB;
+GO
+IF OBJECT_ID('dbo.Roles','U') IS NULL BEGIN CREATE TABLE dbo.Roles(RoleId INT IDENTITY PRIMARY KEY,RoleName NVARCHAR(30) NOT NULL UNIQUE); END;
+IF OBJECT_ID('dbo.Users','U') IS NULL BEGIN CREATE TABLE dbo.Users(UserId INT IDENTITY PRIMARY KEY,FullName NVARCHAR(120) NOT NULL,Email NVARCHAR(256) NOT NULL UNIQUE,PasswordHash NVARCHAR(500) NOT NULL,RoleId INT NOT NULL,IsActive BIT NOT NULL DEFAULT 1,CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),CONSTRAINT FK_Users_Roles FOREIGN KEY(RoleId) REFERENCES dbo.Roles(RoleId)); CREATE INDEX IX_Users_RoleId ON dbo.Users(RoleId); END;
+IF OBJECT_ID('dbo.Conversations','U') IS NULL BEGIN CREATE TABLE dbo.Conversations(ConversationId INT IDENTITY PRIMARY KEY,UserId INT NOT NULL,Title NVARCHAR(200) NOT NULL,StartedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),EndedAt DATETIME2 NULL,Status NVARCHAR(20) NOT NULL DEFAULT 'Active' CHECK(Status IN ('Active','Completed')),CONSTRAINT FK_Conversations_Users FOREIGN KEY(UserId) REFERENCES dbo.Users(UserId) ON DELETE CASCADE); CREATE INDEX IX_Conversations_UserId_StartedAt ON dbo.Conversations(UserId,StartedAt); END;
+IF OBJECT_ID('dbo.ConversationMessages','U') IS NULL BEGIN CREATE TABLE dbo.ConversationMessages(MessageId BIGINT IDENTITY PRIMARY KEY,ConversationId INT NOT NULL,SenderType NVARCHAR(10) NOT NULL CHECK(SenderType IN ('User','AI')),MessageText NVARCHAR(MAX) NOT NULL,CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),CONSTRAINT FK_Messages_Conversations FOREIGN KEY(ConversationId) REFERENCES dbo.Conversations(ConversationId) ON DELETE CASCADE); CREATE INDEX IX_Messages_ConversationId_CreatedAt ON dbo.ConversationMessages(ConversationId,CreatedAt); END;
+IF OBJECT_ID('dbo.InteractionLogs','U') IS NULL BEGIN CREATE TABLE dbo.InteractionLogs(LogId BIGINT IDENTITY PRIMARY KEY,UserId INT NOT NULL,ConversationId INT NULL,Action NVARCHAR(100) NOT NULL,Details NVARCHAR(2000) NOT NULL,CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),CONSTRAINT FK_Logs_Users FOREIGN KEY(UserId) REFERENCES dbo.Users(UserId),CONSTRAINT FK_Logs_Conversations FOREIGN KEY(ConversationId) REFERENCES dbo.Conversations(ConversationId) ON DELETE SET NULL); CREATE INDEX IX_Logs_UserId_CreatedAt ON dbo.InteractionLogs(UserId,CreatedAt); CREATE INDEX IX_Logs_CreatedAt ON dbo.InteractionLogs(CreatedAt); END;
+IF NOT EXISTS(SELECT 1 FROM dbo.Roles WHERE RoleName='Admin') INSERT dbo.Roles(RoleName) VALUES('Admin');
+IF NOT EXISTS(SELECT 1 FROM dbo.Roles WHERE RoleName='Teacher') INSERT dbo.Roles(RoleName) VALUES('Teacher');
+IF NOT EXISTS(SELECT 1 FROM dbo.Roles WHERE RoleName='Student') INSERT dbo.Roles(RoleName) VALUES('Student');
+GO

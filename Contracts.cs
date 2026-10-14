@@ -1,0 +1,10 @@
+namespace AISmartLearning.API.Contracts;
+public sealed record LoginRequest(string Email,string Password);
+public sealed record RegisterRequest(string FullName,string Email,string Password,string Role);
+public sealed record UserSummary(int UserId,string FullName,string Email,string Role,bool IsActive);
+public sealed record LoginResponse(string Token,DateTime ExpiresAtUtc,UserSummary User);
+public sealed record CreateConversationRequest(string? Title);
+public sealed record SendMessageRequest(string Message);
+public sealed record MessageDto(long MessageId,string SenderType,string MessageText,DateTime CreatedAt);
+public sealed record ConversationDto(int ConversationId,string Title,DateTime StartedAt,DateTime? EndedAt,string Status,int MessageCount);
+public sealed record SetUserStatusRequest(bool IsActive);
